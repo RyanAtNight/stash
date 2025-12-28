@@ -13,6 +13,10 @@ import (
 	"github.com/stashapp/stash/pkg/txn"
 )
 
+// TrashPathResolver resolves the trash path for a given file path.
+// It returns the trash path to use, or an empty string if the file should be permanently deleted.
+type TrashPathResolver func(filePath string) string
+
 const deleteFileSuffix = ".delete"
 
 // RenamerRemover provides access to the Rename and Remove functions.
@@ -65,11 +69,12 @@ func newRenamerRemoverImpl() renamerRemoverImpl {
 // committed, the marked files are then deleted from the filesystem using the
 // Commit method.
 type Deleter struct {
-	RenamerRemover RenamerRemover
-	files          []string
-	dirs           []string
-	TrashPath      string            // if set, files will be moved to this directory instead of being permanently deleted
-	trashedPaths   map[string]string // map of original path -> trash path (only used when TrashPath is set)
+	RenamerRemover    RenamerRemover
+	files             []string
+	dirs              []string
+	TrashPath         string            // if set, files will be moved to this directory instead of being permanently deleted
+	trashedPaths      map[string]string // map of original path -> trash path (only used when TrashPath is set)
+	trashPathResolver TrashPathResolver // if set, resolves trash path per file (used for per-library trash)
 }
 
 func NewDeleter() *Deleter {
@@ -85,6 +90,17 @@ func NewDeleterWithTrash(trashPath string) *Deleter {
 		RenamerRemover: newRenamerRemoverImpl(),
 		TrashPath:      trashPath,
 		trashedPaths:   make(map[string]string),
+	}
+}
+
+// NewDeleterWithResolver creates a Deleter with a custom trash path resolver.
+// The resolver function is called for each file to determine its trash path.
+// If the resolver returns an empty string, the file will be permanently deleted.
+func NewDeleterWithResolver(resolver TrashPathResolver) *Deleter {
+	return &Deleter{
+		RenamerRemover:    newRenamerRemoverImpl(),
+		trashedPaths:      make(map[string]string),
+		trashPathResolver: resolver,
 	}
 }
 
@@ -194,21 +210,25 @@ func (d *Deleter) Rollback() {
 // Any errors encountered are logged. All files will be attempted, regardless
 // of the errors encountered.
 func (d *Deleter) Commit() {
-	if d.TrashPath != "" {
-		// Files were already moved to trash during renameForDelete, just clear tracking
-		logger.Debugf("Commit: %d files and %d directories already in trash, clearing tracking", len(d.files), len(d.dirs))
-	} else {
-		// Permanently delete files and directories marked with .delete suffix
-		for _, f := range d.files {
-			if err := d.RenamerRemover.Remove(f + deleteFileSuffix); err != nil {
-				logger.Warnf("Error deleting file %q: %v", f+deleteFileSuffix, err)
-			}
+	// For files that were moved to trash, just clear tracking
+	// For files renamed with .delete suffix, permanently delete them
+	for _, f := range d.files {
+		if _, ok := d.trashedPaths[f]; ok {
+			// Already in trash, nothing to do
+			continue
 		}
+		if err := d.RenamerRemover.Remove(f + deleteFileSuffix); err != nil {
+			logger.Warnf("Error deleting file %q: %v", f+deleteFileSuffix, err)
+		}
+	}
 
-		for _, f := range d.dirs {
-			if err := d.RenamerRemover.RemoveAll(f + deleteFileSuffix); err != nil {
-				logger.Warnf("Error deleting directory %q: %v", f+deleteFileSuffix, err)
-			}
+	for _, f := range d.dirs {
+		if _, ok := d.trashedPaths[f]; ok {
+			// Already in trash, nothing to do
+			continue
+		}
+		if err := d.RenamerRemover.RemoveAll(f + deleteFileSuffix); err != nil {
+			logger.Warnf("Error deleting directory %q: %v", f+deleteFileSuffix, err)
 		}
 	}
 
@@ -218,15 +238,31 @@ func (d *Deleter) Commit() {
 }
 
 func (d *Deleter) renameForDelete(path string, bypassTrash bool) error {
-	if d.TrashPath != "" && !bypassTrash {
-		// Move file to trash immediately
-		trashDest, err := fsutil.MoveToTrash(path, d.TrashPath)
-		if err != nil {
-			return err
+	if !bypassTrash {
+		// Check for per-file trash path resolver first
+		if d.trashPathResolver != nil {
+			trashPath := d.trashPathResolver(path)
+			if trashPath != "" {
+				trashDest, err := fsutil.MoveToTrash(path, trashPath)
+				if err != nil {
+					return err
+				}
+				d.trashedPaths[path] = trashDest
+				logger.Infof("Moved %q to trash at %s", path, trashDest)
+				return nil
+			}
 		}
-		d.trashedPaths[path] = trashDest
-		logger.Infof("Moved %q to trash at %s", path, trashDest)
-		return nil
+
+		// Check for global trash path
+		if d.TrashPath != "" {
+			trashDest, err := fsutil.MoveToTrash(path, d.TrashPath)
+			if err != nil {
+				return err
+			}
+			d.trashedPaths[path] = trashDest
+			logger.Infof("Moved %q to trash at %s", path, trashDest)
+			return nil
+		}
 	}
 
 	// Standard behavior: rename with .delete suffix (or when bypassing trash)
@@ -234,12 +270,8 @@ func (d *Deleter) renameForDelete(path string, bypassTrash bool) error {
 }
 
 func (d *Deleter) renameForRestore(path string) error {
-	if d.TrashPath != "" {
-		// Restore file from trash
-		trashPath, ok := d.trashedPaths[path]
-		if !ok {
-			return fmt.Errorf("no trash path found for %q", path)
-		}
+	// Check if this file was moved to trash (either via resolver or global TrashPath)
+	if trashPath, ok := d.trashedPaths[path]; ok {
 		return d.RenamerRemover.Rename(trashPath, path)
 	}
 
