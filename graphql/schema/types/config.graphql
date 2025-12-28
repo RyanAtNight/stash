@@ -71,6 +71,8 @@ input ConfigGeneralInput {
   backupDirectoryPath: String
   "Path to trash directory - if set, deleted files will be moved here instead of being permanently deleted"
   deleteTrashPath: String
+  "If true, files will be moved to a .stash-trash folder in each library instead of the global trash path"
+  useLibraryTrash: Boolean
   "Path to generated files"
   generatedPath: String
   "Path to import/export files"
@@ -195,6 +197,8 @@ type ConfigGeneralResult {
   backupDirectoryPath: String!
   "Path to trash directory - if set, deleted files will be moved here instead of being permanently deleted"
   deleteTrashPath: String!
+  "If true, files will be moved to a .stash-trash folder in each library instead of the global trash path"
+  useLibraryTrash: Boolean!
   "Path to generated files"
   generatedPath: String!
   "Path to import/export files"
