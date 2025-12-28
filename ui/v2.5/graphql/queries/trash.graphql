@@ -1,0 +1,11 @@
+query TrashContents($filter: TrashFilterInput) {
+  trashContents(filter: $filter) {
+    id
+    trashPath
+    originalPath
+    fileName
+    libraryPath
+    deletedAt
+    fileSize
+  }
+}

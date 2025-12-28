@@ -1,0 +1,23 @@
+mutation RestoreFromTrash($id: ID!) {
+  restoreFromTrash(id: $id) {
+    success
+    restoredPath
+    error
+  }
+}
+
+mutation RestoreMultipleFromTrash($ids: [ID!]!) {
+  restoreMultipleFromTrash(ids: $ids) {
+    restored
+    failed
+    errors
+  }
+}
+
+mutation PermanentlyDeleteFromTrash($ids: [ID!]!) {
+  permanentlyDeleteFromTrash(ids: $ids)
+}
+
+mutation EmptyTrash($libraryPath: String) {
+  emptyTrash(libraryPath: $libraryPath)
+}
