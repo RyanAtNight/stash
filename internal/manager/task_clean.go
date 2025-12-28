@@ -159,6 +159,12 @@ func newCleanFilter(c *config.Config) *cleanFilter {
 }
 
 func (f *cleanFilter) Accept(ctx context.Context, path string, info fs.FileInfo) bool {
+	// HARDCODED: Always exclude .stash-trash directories from cleaning
+	if info.IsDir() && filepath.Base(path) == config.LibraryTrashFolderName {
+		logger.Debugf("Skipping trash directory: %s", path)
+		return true // return true to keep the directory
+	}
+
 	//  #1102 - clean anything in generated path
 	generatedPath := f.generatedPath
 
