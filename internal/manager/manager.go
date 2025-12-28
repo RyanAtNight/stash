@@ -186,6 +186,35 @@ func (s *Manager) RefreshPluginSourceManager() {
 	s.PluginPackageManager = createPackageManager(s.Config.GetPluginsPath(), s.Config.GetPluginPackagePathGetter())
 }
 
+// RefreshTrashSymlinks creates or updates symlinks in the global trash path
+// pointing to each library's .stash-trash folder when per-library trash is enabled.
+func (s *Manager) RefreshTrashSymlinks() {
+	if !s.Config.GetUseLibraryTrash() {
+		return
+	}
+
+	globalTrashPath := s.Config.GetDeleteTrashPath()
+	if globalTrashPath == "" {
+		return
+	}
+
+	stashPaths := s.Config.GetStashPaths()
+	libraryPaths := make([]string, len(stashPaths))
+	for i, sp := range stashPaths {
+		libraryPaths[i] = sp.Path
+	}
+
+	// Cleanup stale symlinks first
+	if err := fsutil.CleanupStaleTrashSymlinks(globalTrashPath, libraryPaths); err != nil {
+		logger.Warnf("Error cleaning up stale trash symlinks: %v", err)
+	}
+
+	// Create symlinks for current libraries
+	if err := fsutil.CreateTrashSymlinks(globalTrashPath, libraryPaths, config.LibraryTrashFolderName); err != nil {
+		logger.Warnf("Error creating trash symlinks: %v", err)
+	}
+}
+
 func setSetupDefaults(input *SetupInput) {
 	if input.ConfigLocation == "" {
 		input.ConfigLocation = filepath.Join(fsutil.GetHomeDirectory(), ".stash", "config.yml")

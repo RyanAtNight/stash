@@ -247,6 +247,9 @@ func (s *Manager) postInit(ctx context.Context) error {
 	s.RefreshFFMpeg(ctx)
 	s.RefreshStreamManager()
 
+	// Create symlinks for per-library trash if enabled
+	s.RefreshTrashSymlinks()
+
 	return nil
 }
 

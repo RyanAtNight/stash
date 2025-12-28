@@ -85,6 +85,8 @@ func (r *mutationResolver) setConfigFloat(key string, value *float64) {
 func (r *mutationResolver) ConfigureGeneral(ctx context.Context, input ConfigGeneralInput) (*ConfigGeneralResult, error) {
 	c := config.GetInstance()
 
+	refreshTrashSymlinks := false
+
 	existingPaths := c.GetStashPaths()
 	if input.Stashes != nil {
 		for _, s := range input.Stashes {
@@ -104,6 +106,7 @@ func (r *mutationResolver) ConfigureGeneral(ctx context.Context, input ConfigGen
 			}
 		}
 		c.SetInterface(config.Stash, input.Stashes)
+		refreshTrashSymlinks = true
 	}
 
 	checkConfigOverride := func(key string) error {
@@ -157,10 +160,12 @@ func (r *mutationResolver) ConfigureGeneral(ctx context.Context, input ConfigGen
 		}
 
 		c.SetString(config.DeleteTrashPath, *input.DeleteTrashPath)
+		refreshTrashSymlinks = true
 	}
 
 	if input.UseLibraryTrash != nil {
 		c.SetUseLibraryTrash(*input.UseLibraryTrash)
+		refreshTrashSymlinks = true
 	}
 
 	existingGeneratedPath := c.GetGeneratedPath()
@@ -454,6 +459,9 @@ func (r *mutationResolver) ConfigureGeneral(ctx context.Context, input ConfigGen
 	}
 	if refreshPluginSource {
 		manager.GetInstance().RefreshPluginSourceManager()
+	}
+	if refreshTrashSymlinks {
+		manager.GetInstance().RefreshTrashSymlinks()
 	}
 
 	return makeConfigGeneralResult(), nil
