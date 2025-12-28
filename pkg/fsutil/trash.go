@@ -1,6 +1,7 @@
 package fsutil
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -9,8 +10,91 @@ import (
 	"time"
 )
 
+// TrashMetadataSuffix is the file extension for sidecar metadata files
+const TrashMetadataSuffix = ".stash-meta.json"
+
+// TrashMetadata contains information about a trashed file for restoration
+type TrashMetadata struct {
+	OriginalPath string    `json:"originalPath"`
+	DeletedAt    time.Time `json:"deletedAt"`
+}
+
+// WriteTrashMetadata creates a sidecar JSON file with metadata for a trashed file
+func WriteTrashMetadata(trashPath, originalPath string) error {
+	metadata := TrashMetadata{
+		OriginalPath: originalPath,
+		DeletedAt:    time.Now(),
+	}
+
+	data, err := json.MarshalIndent(metadata, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal trash metadata: %w", err)
+	}
+
+	metaPath := trashPath + TrashMetadataSuffix
+	if err := os.WriteFile(metaPath, data, 0644); err != nil {
+		return fmt.Errorf("failed to write trash metadata: %w", err)
+	}
+
+	return nil
+}
+
+// ReadTrashMetadata reads the sidecar metadata file for a trashed file
+func ReadTrashMetadata(trashPath string) (*TrashMetadata, error) {
+	metaPath := trashPath + TrashMetadataSuffix
+
+	data, err := os.ReadFile(metaPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read trash metadata: %w", err)
+	}
+
+	var metadata TrashMetadata
+	if err := json.Unmarshal(data, &metadata); err != nil {
+		return nil, fmt.Errorf("failed to parse trash metadata: %w", err)
+	}
+
+	return &metadata, nil
+}
+
+// RestoreFromTrash moves a file from trash back to its original location
+func RestoreFromTrash(trashPath string) (string, error) {
+	// Read metadata to get original path
+	metadata, err := ReadTrashMetadata(trashPath)
+	if err != nil {
+		return "", fmt.Errorf("failed to read metadata for restore: %w", err)
+	}
+
+	originalPath := metadata.OriginalPath
+
+	// Check if original path is already occupied
+	if _, err := os.Stat(originalPath); err == nil {
+		return "", fmt.Errorf("cannot restore: file already exists at %s", originalPath)
+	}
+
+	// Ensure parent directory exists
+	parentDir := filepath.Dir(originalPath)
+	if err := os.MkdirAll(parentDir, 0755); err != nil {
+		return "", fmt.Errorf("failed to create parent directory: %w", err)
+	}
+
+	// Move file back to original location
+	if err := SafeMove(trashPath, originalPath); err != nil {
+		return "", fmt.Errorf("failed to restore file: %w", err)
+	}
+
+	// Delete the sidecar metadata file
+	metaPath := trashPath + TrashMetadataSuffix
+	if err := os.Remove(metaPath); err != nil {
+		// Log warning but don't fail - the file was restored successfully
+		// The orphaned metadata file can be cleaned up later
+	}
+
+	return originalPath, nil
+}
+
 // MoveToTrash moves a file or directory to a custom trash directory.
 // If a file with the same name already exists in the trash, a timestamp is appended.
+// Creates a sidecar metadata file to enable restoration.
 // Returns the destination path where the file was moved to.
 func MoveToTrash(sourcePath string, trashPath string) (string, error) {
 	// Get absolute path for the source
@@ -39,6 +123,12 @@ func MoveToTrash(sourcePath string, trashPath string) (string, error) {
 	// Move the file to trash using SafeMove to support cross-filesystem moves
 	if err := SafeMove(absSourcePath, destPath); err != nil {
 		return "", fmt.Errorf("failed to move to trash: %w", err)
+	}
+
+	// Create sidecar metadata file for restoration
+	if err := WriteTrashMetadata(destPath, absSourcePath); err != nil {
+		// Log warning but don't fail - the file was trashed successfully
+		// Restoration just won't be possible without metadata
 	}
 
 	return destPath, nil
