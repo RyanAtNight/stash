@@ -1,0 +1,41 @@
+"Represents a file in the trash that can be restored"
+type TrashedFile {
+  "Base64-encoded trash path used as a unique identifier"
+  id: ID!
+  "Current location in trash"
+  trashPath: String!
+  "Original location before deletion"
+  originalPath: String!
+  "Filename only"
+  fileName: String!
+  "Library path this file belongs to"
+  libraryPath: String!
+  "When the file was deleted"
+  deletedAt: Time!
+  "Size in bytes"
+  fileSize: Int64!
+}
+
+input TrashFilterInput {
+  "Filter by library path"
+  libraryPath: String
+}
+
+"Result of a restore operation"
+type RestoreResult {
+  success: Boolean!
+  "Path where the file was restored to"
+  restoredPath: String
+  "Error message if restore failed"
+  error: String
+}
+
+"Result of restoring multiple files"
+type RestoreMultipleResult {
+  "Number of files successfully restored"
+  restored: Int!
+  "Number of files that failed to restore"
+  failed: Int!
+  "Error messages for failed restores"
+  errors: [String!]!
+}

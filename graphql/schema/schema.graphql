@@ -276,6 +276,10 @@ type Query {
 
   # LatestVersion
   latestversion: LatestVersion!
+
+  # Trash
+  "List files in trash folders"
+  trashContents(filter: TrashFilterInput): [TrashedFile!]!
 }
 
 type Mutation {
@@ -585,6 +589,16 @@ type Mutation {
   addTempDLNAIP(input: AddTempDLNAIPInput!): Boolean!
   "Removes an IP address from the temporary DLNA whitelist"
   removeTempDLNAIP(input: RemoveTempDLNAIPInput!): Boolean!
+
+  # Trash management
+  "Restore a file from trash to its original location"
+  restoreFromTrash(id: ID!): RestoreResult!
+  "Restore multiple files from trash"
+  restoreMultipleFromTrash(ids: [ID!]!): RestoreMultipleResult!
+  "Permanently delete files from trash"
+  permanentlyDeleteFromTrash(ids: [ID!]!): Boolean!
+  "Empty all trash or trash for a specific library"
+  emptyTrash(libraryPath: String): Boolean!
 }
 
 type Subscription {
