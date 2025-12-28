@@ -230,6 +230,14 @@ export const SettingsConfigurationPanel: React.FC = () => {
           value={general.deleteTrashPath ?? undefined}
           onChange={(v) => saveGeneral({ deleteTrashPath: v })}
         />
+
+        <BooleanSetting
+          id="use-library-trash"
+          headingID="config.general.use_library_trash.heading"
+          subHeadingID="config.general.use_library_trash.description"
+          checked={general.useLibraryTrash ?? false}
+          onChange={(v) => saveGeneral({ useLibraryTrash: v })}
+        />
       </SettingSection>
 
       <SettingSection headingID="config.general.database">

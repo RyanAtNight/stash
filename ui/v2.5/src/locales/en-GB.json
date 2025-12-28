@@ -326,6 +326,10 @@
         "description": "Path where deleted files will be moved to instead of being permanently deleted. Leave empty to permanently delete files.",
         "heading": "Trash Path"
       },
+      "use_library_trash": {
+        "description": "When enabled, deleted files will be moved to a .stash-trash folder within each library instead of the global trash path. This keeps files on their original drive and avoids slow cross-filesystem moves.",
+        "heading": "Use Per-Library Trash"
+      },
       "blobs_path": {
         "description": "Where in the filesystem to store binary data. Applicable only when using the Filesystem blob storage type. WARNING: changing this requires manually moving existing data.",
         "heading": "Binary data filesystem path"
