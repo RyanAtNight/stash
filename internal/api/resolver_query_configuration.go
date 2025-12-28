@@ -83,6 +83,7 @@ func makeConfigGeneralResult() *ConfigGeneralResult {
 		DatabasePath:                  config.GetDatabasePath(),
 		BackupDirectoryPath:           config.GetBackupDirectoryPath(),
 		DeleteTrashPath:               config.GetDeleteTrashPath(),
+		UseLibraryTrash:               config.GetUseLibraryTrash(),
 		GeneratedPath:                 config.GetGeneratedPath(),
 		MetadataPath:                  config.GetMetadataPath(),
 		ConfigFilePath:                config.GetConfigFile(),
