@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/stashapp/stash/internal/manager"
-	"github.com/stashapp/stash/pkg/file"
 	"github.com/stashapp/stash/pkg/logger"
 	"github.com/stashapp/stash/pkg/models"
 	"github.com/stashapp/stash/pkg/plugin"
@@ -429,14 +428,9 @@ func (r *mutationResolver) SceneDestroy(ctx context.Context, input models.SceneD
 	}
 
 	fileNamingAlgo := manager.GetInstance().Config.GetVideoFileNamingAlgorithm()
-	trashPath := manager.GetInstance().Config.GetDeleteTrashPath()
 
 	var s *models.Scene
-	fileDeleter := &scene.FileDeleter{
-		Deleter:        file.NewDeleterWithTrash(trashPath),
-		FileNamingAlgo: fileNamingAlgo,
-		Paths:          manager.GetInstance().Paths,
-	}
+	fileDeleter := newSceneFileDeleter()
 
 	deleteGenerated := utils.IsTrue(input.DeleteGenerated)
 	deleteFile := utils.IsTrue(input.DeleteFile)
@@ -484,13 +478,7 @@ func (r *mutationResolver) ScenesDestroy(ctx context.Context, input models.Scene
 
 	var scenes []*models.Scene
 	fileNamingAlgo := manager.GetInstance().Config.GetVideoFileNamingAlgorithm()
-	trashPath := manager.GetInstance().Config.GetDeleteTrashPath()
-
-	fileDeleter := &scene.FileDeleter{
-		Deleter:        file.NewDeleterWithTrash(trashPath),
-		FileNamingAlgo: fileNamingAlgo,
-		Paths:          manager.GetInstance().Paths,
-	}
+	fileDeleter := newSceneFileDeleter()
 
 	deleteGenerated := utils.IsTrue(input.DeleteGenerated)
 	deleteFile := utils.IsTrue(input.DeleteFile)
@@ -595,13 +583,7 @@ func (r *mutationResolver) SceneMerge(ctx context.Context, input SceneMergeInput
 		values = &v
 	}
 
-	mgr := manager.GetInstance()
-	trashPath := mgr.Config.GetDeleteTrashPath()
-	fileDeleter := &scene.FileDeleter{
-		Deleter:        file.NewDeleterWithTrash(trashPath),
-		FileNamingAlgo: mgr.Config.GetVideoFileNamingAlgorithm(),
-		Paths:          mgr.Paths,
-	}
+	fileDeleter := newSceneFileDeleter()
 
 	var ret *models.Scene
 	if err := r.withTxn(ctx, func(ctx context.Context) error {
@@ -739,14 +721,7 @@ func (r *mutationResolver) SceneMarkerUpdate(ctx context.Context, input SceneMar
 		}
 	}
 
-	mgr := manager.GetInstance()
-	trashPath := mgr.Config.GetDeleteTrashPath()
-
-	fileDeleter := &scene.FileDeleter{
-		Deleter:        file.NewDeleterWithTrash(trashPath),
-		FileNamingAlgo: mgr.Config.GetVideoFileNamingAlgorithm(),
-		Paths:          mgr.Paths,
-	}
+	fileDeleter := newSceneFileDeleter()
 
 	// Start the transaction and save the scene marker
 	if err := r.withTxn(ctx, func(ctx context.Context) error {
@@ -953,14 +928,7 @@ func (r *mutationResolver) SceneMarkersDestroy(ctx context.Context, markerIDs []
 	}
 
 	var markers []*models.SceneMarker
-	fileNamingAlgo := manager.GetInstance().Config.GetVideoFileNamingAlgorithm()
-	trashPath := manager.GetInstance().Config.GetDeleteTrashPath()
-
-	fileDeleter := &scene.FileDeleter{
-		Deleter:        file.NewDeleterWithTrash(trashPath),
-		FileNamingAlgo: fileNamingAlgo,
-		Paths:          manager.GetInstance().Paths,
-	}
+	fileDeleter := newSceneFileDeleter()
 
 	if err := r.withTxn(ctx, func(ctx context.Context) error {
 		qb := r.repository.SceneMarker

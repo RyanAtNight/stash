@@ -149,9 +149,7 @@ func (r *mutationResolver) DeleteFiles(ctx context.Context, ids []string) (ret b
 		return false, fmt.Errorf("converting ids: %w", err)
 	}
 
-	trashPath := manager.GetInstance().Config.GetDeleteTrashPath()
-
-	fileDeleter := file.NewDeleterWithTrash(trashPath)
+	fileDeleter := newFileDeleter()
 	destroyer := &file.ZipDestroyer{
 		FileDestroyer:   r.repository.File,
 		FolderDestroyer: r.repository.Folder,

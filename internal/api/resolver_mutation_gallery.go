@@ -9,9 +9,7 @@ import (
 	"strings"
 
 	"github.com/stashapp/stash/internal/manager"
-	"github.com/stashapp/stash/pkg/file"
 	"github.com/stashapp/stash/pkg/gallery"
-	"github.com/stashapp/stash/pkg/image"
 	"github.com/stashapp/stash/pkg/models"
 	"github.com/stashapp/stash/pkg/plugin"
 	"github.com/stashapp/stash/pkg/plugin/hook"
@@ -335,14 +333,9 @@ func (r *mutationResolver) GalleryDestroy(ctx context.Context, input models.Gall
 		return false, fmt.Errorf("converting ids: %w", err)
 	}
 
-	trashPath := manager.GetInstance().Config.GetDeleteTrashPath()
-
 	var galleries []*models.Gallery
 	var imgsDestroyed []*models.Image
-	fileDeleter := &image.FileDeleter{
-		Deleter: file.NewDeleterWithTrash(trashPath),
-		Paths:   manager.GetInstance().Paths,
-	}
+	fileDeleter := newImageFileDeleter()
 
 	deleteGenerated := utils.IsTrue(input.DeleteGenerated)
 	deleteFile := utils.IsTrue(input.DeleteFile)

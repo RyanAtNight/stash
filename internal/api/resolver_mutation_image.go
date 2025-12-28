@@ -5,9 +5,6 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/stashapp/stash/internal/manager"
-	"github.com/stashapp/stash/pkg/file"
-	"github.com/stashapp/stash/pkg/image"
 	"github.com/stashapp/stash/pkg/models"
 	"github.com/stashapp/stash/pkg/plugin"
 	"github.com/stashapp/stash/pkg/plugin/hook"
@@ -308,13 +305,9 @@ func (r *mutationResolver) ImageDestroy(ctx context.Context, input models.ImageD
 		return false, fmt.Errorf("converting id: %w", err)
 	}
 
-	trashPath := manager.GetInstance().Config.GetDeleteTrashPath()
-
 	var i *models.Image
-	fileDeleter := &image.FileDeleter{
-		Deleter: file.NewDeleterWithTrash(trashPath),
-		Paths:   manager.GetInstance().Paths,
-	}
+	fileDeleter := newImageFileDeleter()
+
 	if err := r.withTxn(ctx, func(ctx context.Context) error {
 		i, err = r.repository.Image.Find(ctx, imageID)
 		if err != nil {
@@ -350,13 +343,9 @@ func (r *mutationResolver) ImagesDestroy(ctx context.Context, input models.Image
 		return false, fmt.Errorf("converting ids: %w", err)
 	}
 
-	trashPath := manager.GetInstance().Config.GetDeleteTrashPath()
-
 	var images []*models.Image
-	fileDeleter := &image.FileDeleter{
-		Deleter: file.NewDeleterWithTrash(trashPath),
-		Paths:   manager.GetInstance().Paths,
-	}
+	fileDeleter := newImageFileDeleter()
+
 	if err := r.withTxn(ctx, func(ctx context.Context) error {
 		qb := r.repository.Image
 
