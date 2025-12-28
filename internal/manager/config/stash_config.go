@@ -6,6 +6,10 @@ import (
 	"github.com/stashapp/stash/pkg/fsutil"
 )
 
+// LibraryTrashFolderName is the name of the trash folder created in each library root
+// when per-library trash is enabled.
+const LibraryTrashFolderName = ".stash-trash"
+
 // Stash configuration details
 type StashConfigInput struct {
 	Path         string `json:"path"`
@@ -37,4 +41,9 @@ func (s StashConfigs) GetStashFromDirPath(dirPath string) *StashConfig {
 		}
 	}
 	return nil
+}
+
+// GetTrashPath returns the path to the trash folder for this library.
+func (s *StashConfig) GetTrashPath() string {
+	return filepath.Join(s.Path, LibraryTrashFolderName)
 }
