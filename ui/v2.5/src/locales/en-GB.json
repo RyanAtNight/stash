@@ -267,7 +267,8 @@
       "services": "Services",
       "system": "System",
       "tasks": "Tasks",
-      "tools": "Tools"
+      "tools": "Tools",
+      "trash": "Trash"
     },
     "dlna": {
       "allow_temp_ip": "Allow {tempIP}",
@@ -607,6 +608,27 @@
         "whitespace_chars_desc": "These characters will be replaced with whitespace in the title"
       },
       "scene_tools": "Scene Tools"
+    },
+    "trash": {
+      "heading": "Trash",
+      "filter_library": "Library:",
+      "all_libraries": "All Libraries",
+      "empty_trash": "Empty Trash",
+      "empty": "Trash is empty",
+      "restore_selected": "Restore",
+      "delete_selected": "Delete Permanently",
+      "selected_count": "{count} selected",
+      "filename": "Filename",
+      "original_location": "Original Location",
+      "deleted_at": "Deleted",
+      "size": "Size",
+      "unknown_location": "Unknown",
+      "restored_file": "Restored to {path}",
+      "restored_multiple": "Restored {count} files ({failed} failed)",
+      "confirm_permanent_delete": "Are you sure you want to permanently delete the selected files? This cannot be undone.",
+      "confirm_empty_trash": "Are you sure you want to empty the trash? This will permanently delete all files and cannot be undone.",
+      "deleted_permanently": "Files deleted permanently",
+      "emptied": "Trash emptied"
     },
     "ui": {
       "abbreviate_counters": {

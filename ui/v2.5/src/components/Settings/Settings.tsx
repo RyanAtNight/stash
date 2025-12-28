@@ -17,6 +17,7 @@ import { SettingsServicesPanel } from "./SettingsServicesPanel";
 import { SettingsContext, useSettings } from "./context";
 import { SettingsLibraryPanel } from "./SettingsLibraryPanel";
 import { SettingsSecurityPanel } from "./SettingsSecurityPanel";
+import { SettingsTrashPanel } from "./SettingsTrashPanel";
 import Changelog from "../Changelog/Changelog";
 
 const validTabs = [
@@ -30,6 +31,7 @@ const validTabs = [
   "plugins",
   "logs",
   "tools",
+  "trash",
   "changelog",
   "about",
 ] as const;
@@ -123,6 +125,13 @@ const SettingTabs: React.FC<{ tab: TabKey }> = ({ tab }) => {
               </LinkContainer>
             </Nav.Item>
             <Nav.Item>
+              <LinkContainer to="/settings?tab=trash">
+                <Nav.Link eventKey="trash">
+                  <FormattedMessage id="config.categories.trash" />
+                </Nav.Link>
+              </LinkContainer>
+            </Nav.Item>
+            <Nav.Item>
               <LinkContainer to="/settings?tab=changelog">
                 <Nav.Link eventKey="changelog">
                   <FormattedMessage id="config.categories.changelog" />
@@ -175,6 +184,9 @@ const SettingTabs: React.FC<{ tab: TabKey }> = ({ tab }) => {
             </Tab.Pane>
             <Tab.Pane eventKey="tools" unmountOnExit>
               <SettingsToolsPanel />
+            </Tab.Pane>
+            <Tab.Pane eventKey="trash" unmountOnExit>
+              <SettingsTrashPanel />
             </Tab.Pane>
             <Tab.Pane eventKey="metadata-providers" unmountOnExit>
               <SettingsScrapingPanel />
