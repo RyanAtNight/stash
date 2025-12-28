@@ -271,6 +271,12 @@ func newScanFilter(c *config.Config, repo models.Repository, minModTime time.Tim
 }
 
 func (f *scanFilter) Accept(ctx context.Context, path string, info fs.FileInfo) bool {
+	// HARDCODED: Always exclude .stash-trash directories
+	if info.IsDir() && filepath.Base(path) == config.LibraryTrashFolderName {
+		logger.Debugf("Skipping trash directory: %s", path)
+		return false
+	}
+
 	if fsutil.IsPathInDir(f.generatedPath, path) {
 		logger.Warnf("Skipping %q as it overlaps with the generated folder", path)
 		return false
