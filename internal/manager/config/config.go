@@ -275,7 +275,8 @@ const (
 	deleteGeneratedDefaultDefault = true
 
 	// Trash/Recycle Bin options
-	DeleteTrashPath = "delete_trash_path"
+	DeleteTrashPath  = "delete_trash_path"
+	UseLibraryTrash  = "use_library_trash"
 
 	// Desktop Integration Options
 	NoBrowser                           = "nobrowser"
@@ -1485,6 +1486,14 @@ func (i *Config) GetDeleteTrashPath() string {
 
 func (i *Config) SetDeleteTrashPath(value string) {
 	i.SetString(DeleteTrashPath, value)
+}
+
+func (i *Config) GetUseLibraryTrash() bool {
+	return i.getBool(UseLibraryTrash)
+}
+
+func (i *Config) SetUseLibraryTrash(value bool) {
+	i.SetBool(UseLibraryTrash, value)
 }
 
 // GetDefaultIdentifySettings returns the default Identify task settings.
