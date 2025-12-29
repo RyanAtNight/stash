@@ -206,7 +206,7 @@ export const SettingsTrashPanel: React.FC = () => {
                 )}
               </div>
 
-              <Table striped bordered hover size="sm">
+              <Table responsive striped bordered hover size="sm">
                 <thead>
                   <tr>
                     <th style={{ width: "40px" }}>

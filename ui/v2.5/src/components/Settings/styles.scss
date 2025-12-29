@@ -8,6 +8,10 @@
   max-width: 780px;
 }
 
+#configuration-tabs-tabpane-trash {
+  max-width: none;
+}
+
 .setting-section {
   &:not(:first-child) {
     margin-top: 1.5em;
