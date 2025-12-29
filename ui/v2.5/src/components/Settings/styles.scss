@@ -6,10 +6,10 @@
 
 #settings-container .tab-content {
   max-width: 780px;
-}
 
-#configuration-tabs-tabpane-trash {
-  max-width: none;
+  &:has(#configuration-tabs-tabpane-trash.active) {
+    max-width: none;
+  }
 }
 
 .setting-section {
