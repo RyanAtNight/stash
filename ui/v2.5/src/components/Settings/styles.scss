@@ -12,6 +12,17 @@
   }
 }
 
+#configuration-tabs-tabpane-trash {
+  .table-hover tbody tr:hover {
+    background-color: $primary;
+    color: $text-color;
+
+    td {
+      color: inherit;
+    }
+  }
+}
+
 .setting-section {
   &:not(:first-child) {
     margin-top: 1.5em;
