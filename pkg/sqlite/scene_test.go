@@ -4373,6 +4373,106 @@ func verifyScenesPerformerCount(t *testing.T, performerCountCriterion models.Int
 	})
 }
 
+func TestSceneQueryStashIDCount(t *testing.T) {
+	withTxn(func(ctx context.Context) error {
+		sqb := db.Scene
+
+		// Create a scene with 0 StashIDs for testing
+		sceneWithNoStashIDs := &models.Scene{
+			Title: "Scene with no StashIDs",
+		}
+		if err := sqb.Create(ctx, sceneWithNoStashIDs, nil); err != nil {
+			return fmt.Errorf("Error creating scene with no stash IDs: %s", err.Error())
+		}
+
+		// Create a scene with 2 StashIDs for testing
+		sceneWithTwoStashIDs := &models.Scene{
+			Title: "Scene with two StashIDs",
+			StashIDs: models.NewRelatedStashIDs([]models.StashID{
+				{
+					StashID:   "stashid1",
+					Endpoint:  "endpoint1",
+					UpdatedAt: epochTime,
+				},
+				{
+					StashID:   "stashid2",
+					Endpoint:  "endpoint2",
+					UpdatedAt: epochTime,
+				},
+			}),
+		}
+		if err := sqb.Create(ctx, sceneWithTwoStashIDs, nil); err != nil {
+			return fmt.Errorf("Error creating scene with two stash IDs: %s", err.Error())
+		}
+
+		return nil
+	})
+
+	// Test equals 0
+	stashIDCountCriterion := models.IntCriterionInput{
+		Value:    0,
+		Modifier: models.CriterionModifierEquals,
+	}
+	verifyScenesStashIDCount(t, stashIDCountCriterion)
+
+	// Test equals 1 (most scenes in fixtures have exactly 1)
+	stashIDCountCriterion.Value = 1
+	stashIDCountCriterion.Modifier = models.CriterionModifierEquals
+	verifyScenesStashIDCount(t, stashIDCountCriterion)
+
+	// Test equals 2
+	stashIDCountCriterion.Value = 2
+	stashIDCountCriterion.Modifier = models.CriterionModifierEquals
+	verifyScenesStashIDCount(t, stashIDCountCriterion)
+
+	// Test not equals 1
+	stashIDCountCriterion.Value = 1
+	stashIDCountCriterion.Modifier = models.CriterionModifierNotEquals
+	verifyScenesStashIDCount(t, stashIDCountCriterion)
+
+	// Test greater than 0
+	stashIDCountCriterion.Value = 0
+	stashIDCountCriterion.Modifier = models.CriterionModifierGreaterThan
+	verifyScenesStashIDCount(t, stashIDCountCriterion)
+
+	// Test greater than 1
+	stashIDCountCriterion.Value = 1
+	stashIDCountCriterion.Modifier = models.CriterionModifierGreaterThan
+	verifyScenesStashIDCount(t, stashIDCountCriterion)
+
+	// Test less than 1
+	stashIDCountCriterion.Value = 1
+	stashIDCountCriterion.Modifier = models.CriterionModifierLessThan
+	verifyScenesStashIDCount(t, stashIDCountCriterion)
+
+	// Test less than 2
+	stashIDCountCriterion.Value = 2
+	stashIDCountCriterion.Modifier = models.CriterionModifierLessThan
+	verifyScenesStashIDCount(t, stashIDCountCriterion)
+}
+
+func verifyScenesStashIDCount(t *testing.T, stashIDCountCriterion models.IntCriterionInput) {
+	withTxn(func(ctx context.Context) error {
+		sqb := db.Scene
+		sceneFilter := models.SceneFilterType{
+			StashIDCount: &stashIDCountCriterion,
+		}
+
+		scenes := queryScene(ctx, t, sqb, &sceneFilter, nil)
+		assert.Greater(t, len(scenes), 0)
+
+		for _, scene := range scenes {
+			if err := scene.LoadStashIDs(ctx, sqb); err != nil {
+				t.Errorf("scene.LoadStashIDs() error = %v", err)
+				return nil
+			}
+			verifyInt(t, len(scene.StashIDs.List()), stashIDCountCriterion)
+		}
+
+		return nil
+	})
+}
+
 func TestFindByMovieID(t *testing.T) {
 	withTxn(func(ctx context.Context) error {
 		sqb := db.Scene
