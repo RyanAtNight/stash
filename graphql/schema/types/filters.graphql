@@ -308,6 +308,8 @@ input SceneFilterType {
     @deprecated(reason: "use stash_ids_endpoint instead")
   "Filter by StashIDs"
   stash_ids_endpoint: StashIDsCriterionInput
+  "Filter by StashID count"
+  stash_id_count: IntCriterionInput
   "Filter by url"
   url: StringCriterionInput
   "Filter by interactive"
